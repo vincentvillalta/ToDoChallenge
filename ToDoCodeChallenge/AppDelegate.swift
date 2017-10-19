@@ -7,16 +7,34 @@
 //
 
 import UIKit
+import GRDB
+import RxSwift
+var dbQueue: DatabaseQueue!
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
-
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Try to open the database, in case of error the app will raise an assertion
+        do {
+            try setupDatabase(application)
+        } catch {
+            assertionFailure("Error on database creation")
+        }
         return true
+    }
+    
+    /// Determine the place and name for the SQLite database
+    ///
+    /// - Parameter application: App context
+    /// - Throws: in case the database can not be created (i.e. not existing folder or outside the sandbox) should throw an exception
+    private func setupDatabase(_ application: UIApplication) throws {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as NSString
+        let databasePath = documentsPath.appendingPathComponent("tasks.sqlite")
+        dbQueue = try DatabaseService.openDatabase(atPath: databasePath)
+        dbQueue.setupMemoryManagement(in: application)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
